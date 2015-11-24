@@ -1,167 +1,136 @@
 <?php
 /*
-Template Name: Print Processing Orders :)
+Template Name: Отчёт по заказам
 */
-if ( ! is_user_logged_in() || ! current_user_can( 'manage_options' ) ) {
-	wp_die( 'This page is private.' );
-}
+
+if ( ! is_user_logged_in() || ! current_user_can( 'manage_options' ) ) { wp_die( 'This page is private.' ); }
 ?>
-<!DOCTYPE HTML>
-<html>
-<head>
-	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
-	<title><?php _e( 'Processing Orders' ); ?></title>
-	<style>
-		body {
-			background: white;
-			color: black;
-			width: 95%;
-			margin: 0 auto;
-		}
 
-		table {
-			border: 1px solid #000;
-			width: 100%;
-		}
+<?php
+get_header('shop');
+do_action( 'woocommerce_before_main_content' );
+?>
 
-		table td, table th {
-			border: 1px solid #000;
-			padding: 6px;
-		}
-
-		article {
-			border-top: 2px dashed #000;
-			padding: 20px 0;
-		}
-	</style>
-</head>
-<body>
 <header>
 	<?php if ( have_posts() ) : while ( have_posts() ) : the_post(); ?>
-
-		<h1 class="title"><?php the_title(); ?></h1>
-
 		<?php the_content(); ?>
-
 	<?php endwhile; endif; ?>
 </header>
+
 <section>
 	<?php
+	$page_id = get_the_ID();
+	$product_id = (int) get_post_meta($page_id, 'product_id', true);
+	$after = strtotime(get_post_meta($page_id, 'after_date', true));
+	$paged = (get_query_var('paged')) ? get_query_var('paged') : 1;
 
-	global $woocommerce;
+    if ($product_id && $after) {
 
-	$args = array(
-		'post_type'      => 'shop_order',
-		'post_status'    => 'publish',
-		'posts_per_page' => - 1,
-		'tax_query'      => array(
-			array(
-				'taxonomy' => 'shop_order_status',
-				'field'    => 'slug',
-				'terms'    => array( 'completed' )
-			)
-		),
-		'meta_query'     => array(
-			'relation' => 'OR',
-			array(
-				'key'     => '_billing_email',
-				'value'   => array( '' ),
-				'compare' => 'IN'
-			),
-			array(
-				'key'     => '_billing_first_name',
-				'value'   => array( '' ),
-				'compare' => 'IN'
-			)
-		)
-	);
+		global $wpdb;
 
-	$loop = new WP_Query( $args );
+        $after = strftime('%Y-%m-%d %H:%M:%S', $after);
 
-	while ( $loop->have_posts() ) : $loop->the_post();
+		// Получаем id релевантных посты-заказы.
+		$sql = $wpdb->prepare("SELECT oi.order_id FROM {$wpdb->prefix}woocommerce_order_itemmeta AS om
+                               JOIN {$wpdb->prefix}woocommerce_order_items AS oi ON om.order_item_id=oi.order_item_id
+                               JOIN {$wpdb->posts} AS p ON p.ID=oi.order_id
+                               WHERE om.meta_key='_product_id' AND om.meta_value=%d AND p.post_date >=%s", $product_id, $after);
+		$order_ids = $wpdb->get_col($sql);
 
-		$order_id = $loop->post->ID;
+		if ($order_ids) { // Дальше используем стандартные методы
 
-		$order = new WC_Order( $order_id );
+			$args = array( 'ignore_sticky_posts' => true,
+                'posts_per_page' => 5,
+				'paged'          => $paged,
+				'post_type'      => 'shop_order',
+				'post_status'    => 'publish',
+				'post__in' => $order_ids, // Только релевантные посты
+            );
 
-		?>
+			$loop = new WP_Query($args);
+	
+			while ($loop->have_posts()) {
+				$loop->the_post();
+				$order_id = $loop->post->ID;
+				$order = new WC_Order($order_id);
+	?>
 		<article>
 			<header>
-				<h2>Order #<?php echo $order_id; ?> &mdash; <?php the_time( 'c' ); ?>
-					"><?php echo the_time( 'd/m/Y' ); ?></time></h2>
+				<h2><?php _e( 'Order', 'woocommerce' ); ?> №<?php echo $order_id; ?> &mdash; <?php the_time( 'd.m.Y h:i:s' ); ?></time></h2>
 			</header>
 			<table cellspacing="0" cellpadding="2">
 				<thead>
-				<tr>
-					<th scope="col" style="text-align:left;"><?php _e( 'Product', 'woothemes' ); ?></th>
-					<th scope="col" style="text-align:left;"><?php _e( 'Quantity', 'woothemes' ); ?></th>
-					<th scope="col" style="text-align:left;"><?php _e( 'Price', 'woothemes' ); ?></th>
-				</tr>
+					<tr>
+						<th scope="col" style="text-align:left;"><?php _e( 'Product', 'woocommerce' ); ?></th>
+						<th scope="col" style="text-align:left;"><?php _e( 'Quantity', 'woocommerce' ); ?></th>
+						<th scope="col" style="text-align:left;"><?php _e( 'Price', 'woocommerce' ); ?></th>
+					</tr>
 				</thead>
 				<tfoot>
-				<tr>
-					<th scope="row" colspan="2"
-					    style="text-align:left; padding-top: 12px;"><?php _e( 'Subtotal:', 'woothemes' ); ?></th>
-					<td style="text-align:left; padding-top: 12px;"><?php echo $order->get_subtotal_to_display(); ?></td>
-				</tr>
-				<?php if ( $order->order_shipping > 0 ) : ?>
 					<tr>
-					<th scope="row" colspan="2" style="text-align:left;"><?php _e( 'Shipping:', 'woothemes' ); ?></th>
-					<td style="text-align:left;"><?php echo $order->get_shipping_to_display(); ?></td>
-					</tr><?php endif; ?>
-				<?php if ( $order->order_discount > 0 ) : ?>
+						<th scope="row" colspan="2" style="text-align:left; padding-top: 12px;"><?php _e( 'Subtotal:', 'woocommerce' ); ?></th>
+						<td style="text-align:left; padding-top: 12px;"><?php echo $order->get_subtotal_to_display(); ?></td>
+					</tr>
 					<tr>
-					<th scope="row" colspan="2" style="text-align:left;"><?php _e( 'Discount:', 'woothemes' ); ?></th>
-					<td style="text-align:left;"><?php echo woocommerce_price( $order->order_discount ); ?></td>
-					</tr><?php endif; ?>
-				<?php if ( $order->get_total_tax() > 0 ) : ?>
+						<th scope="row" colspan="2" style="text-align:left; padding-top: 12px;"><?php _e( 'Status', 'woocommerce' ); ?></th>
+						<td style="text-align:left; padding-top: 12px;"><?php echo _e( wc_get_order_status_name(get_post_status()), 'woocommerce' ); ?></td>
+					</tr>
+					<?php if ( $order->order_shipping > 0 ) : ?>
+						<tr>
+							<th scope="row" colspan="2" style="text-align:left;"><?php _e( 'Shipping:', 'woocommerce' ); ?></th>
+							<td style="text-align:left;"><?php echo $order->get_shipping_to_display(); ?></td>
+						</tr>
+					<?php endif; ?>
+					<?php if ( $order->order_discount > 0 ) : ?>
+						<tr>
+							<th scope="row" colspan="2" style="text-align:left;"><?php _e( 'Discount:', 'woocommerce' ); ?></th>
+							<td style="text-align:left;"><?php echo woocommerce_price( $order->order_discount ); ?></td>
+						</tr>
+					<?php endif; ?>
+					<?php if ( $order->get_total_tax() > 0 ) : ?>
+						<tr>
+							<th scope="row" colspan="2" style="text-align:left;"><?php _e( 'Tax:', 'woocommerce' ); ?></th>
+							<td style="text-align:left;"><?php echo woocommerce_price( $order->get_total_tax() ); ?></td>
+						</tr>
+					<?php endif; ?>
 					<tr>
-					<th scope="row" colspan="2" style="text-align:left;"><?php _e( 'Tax:', 'woothemes' ); ?></th>
-					<td style="text-align:left;"><?php echo woocommerce_price( $order->get_total_tax() ); ?></td>
-					</tr><?php endif; ?>
-				<tr>
-					<th scope="row" colspan="2" style="text-align:left;"><?php _e( 'Total:', 'woothemes' ); ?></th>
-					<td style="text-align:left;"><?php echo woocommerce_price( $order->order_total ); ?> <?php _e( '- via', 'woothemes' ); ?> <?php echo ucwords( $order->payment_method ); ?></td>
-				</tr>
+						<th scope="row" colspan="2" style="text-align:left;"><?php _e( 'Total:', 'woocommerce' ); ?></th>
+						<td style="text-align:left;"><?php echo woocommerce_price( $order->order_total ); ?> через <?php echo wc_get_payment_gateway_by_order($order)->get_title(); ?></td>
+					</tr>
 				</tfoot>
 				<tbody>
-				<?php echo $order->email_order_items_table(); ?>
+					<?php echo $order->email_order_items_table(); ?>
 				</tbody>
 			</table>
 
-			<h2><?php _e( 'Customer details', 'woothemes' ); ?></h2>
+			<h2><?php _e( 'Customer details', 'woocommerce' ); ?></h2>
 
-			<?php if ( $order->billing_email ) : ?>
-				<p><strong><?php _e( 'Email:', 'woothemes' ); ?></strong> <?php echo $order->billing_email; ?></p>
-			<?php endif; ?>
-			<?php if ( $order->billing_phone ) : ?>
-				<p><strong><?php _e( 'Tel:', 'woothemes' ); ?></strong> <?php echo $order->billing_phone; ?></p>
-			<?php endif; ?>
-
-			<div style="float:left; width: 49%;">
-
-				<h3><?php _e( 'Billing address', 'woothemes' ); ?></h3>
-
-				<p>
-					<?php echo $order->get_formatted_billing_address(); ?>
-				</p>
-
-			</div>
-
-			<div style="float:right; width: 49%;">
-
-				<h3><?php _e( 'Shipping address', 'woothemes' ); ?></h3>
-
-				<p>
-					<?php echo $order->get_formatted_shipping_address(); ?>
-				</p>
-
-			</div>
+			<p>
+				<?php if ( $order->billing_first_name ) : ?>
+					<strong><?php _e( 'First name', 'woocommerce' ); ?>:</strong> <?php echo $order->billing_first_name; ?>
+				<?php endif; ?>
+				<?php if ( $order->billing_city ) : ?>
+					<strong><?php _e( 'City', 'woocommerce' ); ?>:</strong> <?php echo $order->billing_city; ?>
+				<?php endif; ?>
+			</p>
 
 			<div style="clear:both;"></div>
-
 		</article>
-	<?php endwhile; ?>
+	<?php } ?>
+	<nav>
+        <span style="float:left"><?php previous_posts_link('&laquo; Назад', $loop->max_num_pages) ?></span>
+        <span style="float:right"><?php next_posts_link('Вперёд &raquo;', $loop->max_num_pages) ?></span>
+	</nav>
 </section>
-</body>
-</html>
+<?php
+wp_reset_query();
+} else {?>
+        <section>
+		<p>Заказов товара <?php echo $product_id ?> после <?echo $after ?> нет.</p>
+	</section>
+<?php
+}
+}
+do_action( 'woocommerce_after_main_content' );
+get_footer('shop');
+?>
