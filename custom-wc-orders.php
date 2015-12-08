@@ -22,8 +22,8 @@ do_action( 'woocommerce_before_main_content' );
 <section>
 	<?php
 	$page_id    = get_the_ID();
-	$product_id = (int) get_post_meta( $page_id, 'product_id', true );
-	$after      = strtotime( get_post_meta( $page_id, 'after_date', true ) );
+	$product_id = (int) get_post_meta( $page_id, 'report_product_id', true );
+	$after      = strtotime( get_post_meta( $page_id, 'report_after_date', true ) );
 	$paged      = ( get_query_var( 'paged' ) ) ? get_query_var( 'paged' ) : 1;
 
 	if ( $product_id && $after ) {
