@@ -32,7 +32,7 @@ function show_my_custom_orders() {
 
 			$args = array(
 				'ignore_sticky_posts' => true,
-				'posts_per_page'      => 5,
+				'posts_per_page'      => 50,
 				'paged'               => $paged,
 				'post_type'           => 'shop_order',
 				'post_status'         => 'publish',
