@@ -3,7 +3,7 @@
 Template Name: Отчёт по заказам
 */
 
-if ( ! is_user_logged_in() || ! current_user_can( 'manage_options' ) ) {
+if ( ! is_user_logged_in() ) {
 	wp_die( 'This page is private.' );
 }
 
