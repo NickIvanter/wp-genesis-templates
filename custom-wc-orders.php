@@ -121,13 +121,11 @@ function show_my_custom_orders() {
 		<span style="float:left"><?php previous_posts_link( '&laquo; Назад', $loop->max_num_pages ) ?></span>
 		<span style="float:right"><?php next_posts_link( 'Вперёд &raquo;', $loop->max_num_pages ) ?></span>
 	</nav>
-</section>
+
 <?php
 wp_reset_query();
 } else { ?>
-	<section>
 		<p>Заказов товара <?php echo $product_id ?> после <? echo $after ?> нет.</p>
-	</section>
 	<?php
 }
 }
