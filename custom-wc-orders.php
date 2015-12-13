@@ -103,8 +103,7 @@ do_action( 'woocommerce_before_main_content' );
 				<?php endif; ?>
 				<tr>
 					<th scope="row" colspan="2" style="text-align:left;"><?php _e( 'Total:', 'woocommerce' ); ?></th>
-					<td style="text-align:left;"><?php echo woocommerce_price( $order->order_total ); ?>
-						через <?php echo wc_get_payment_gateway_by_order( $order )->get_title(); ?></td>
+					<td style="text-align:left;"><?php echo woocommerce_price( $order->order_total ); ?></td>
 				</tr>
 				</tfoot>
 				<tbody>
