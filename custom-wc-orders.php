@@ -102,17 +102,9 @@ function show_my_custom_orders() {
 						</tbody>
 					</table>
 
-					<h3><?php _e( 'Customer details', 'woocommerce' ); ?></h3>
-
-					<p>
-						<?php if ( $order->billing_first_name ) : ?>
-							<strong><?php _e( 'First name', 'woocommerce' ); ?>
-								:</strong> <?php echo $order->billing_first_name; ?>
-						<?php endif; ?>
-						<?php if ( $order->billing_city ) : ?>
-							<strong><?php _e( 'City', 'woocommerce' ); ?>:</strong> <?php echo $order->billing_city; ?>
-						<?php endif; ?>
-					</p>
+					<?php
+					show_customer_details( $order );
+					?>
 
 					<hr>
 
@@ -132,6 +124,22 @@ function show_my_custom_orders() {
 			<?php
 		}
 	}
+}
+
+function show_customer_details( $order ) {
+	?>
+	<h3><?php _e( 'Customer details', 'woocommerce' ); ?></h3>
+
+	<p>
+		<?php if ( $order->billing_first_name ) : ?>
+			<strong><?php _e( 'First name', 'woocommerce' ); ?>
+				:</strong> <?php echo $order->billing_first_name; ?>
+		<?php endif; ?>
+		<?php if ( $order->billing_city ) : ?>
+			<strong><?php _e( 'City', 'woocommerce' ); ?>:</strong> <?php echo $order->billing_city; ?>
+		<?php endif; ?>
+	</p>
+	<?php
 }
 
 genesis();
