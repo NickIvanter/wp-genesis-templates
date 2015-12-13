@@ -100,7 +100,7 @@ function show_my_custom_orders() {
 				</tbody>
 			</table>
 
-			<h2><?php _e( 'Customer details', 'woocommerce' ); ?></h2>
+			<h3><?php _e( 'Customer details', 'woocommerce' ); ?></h3>
 
 			<p>
 				<?php if ( $order->billing_first_name ) : ?>
@@ -111,6 +111,8 @@ function show_my_custom_orders() {
 					<strong><?php _e( 'City', 'woocommerce' ); ?>:</strong> <?php echo $order->billing_city; ?>
 				<?php endif; ?>
 			</p>
+
+			<hr>
 
 			<div style="clear:both;"></div>
 		</article>
