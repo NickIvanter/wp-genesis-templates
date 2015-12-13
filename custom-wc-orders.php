@@ -6,21 +6,10 @@ Template Name: Отчёт по заказам
 if ( ! is_user_logged_in() || ! current_user_can( 'manage_options' ) ) {
 	wp_die( 'This page is private.' );
 }
-?>
 
-<?php
-get_header( 'shop' );
-do_action( 'woocommerce_before_main_content' );
-?>
+add_action ('genesis_entry_footer', 'show_my_custom_orders');
 
-<header>
-	<?php if ( have_posts() ) : while ( have_posts() ) : the_post(); ?>
-		<?php the_content(); ?>
-	<?php endwhile; endif; ?>
-</header>
-
-<section>
-	<?php
+function show_my_custom_orders() {
 	$page_id    = get_the_ID();
 	$product_id = (int) get_post_meta( $page_id, 'report_product_id', true );
 	$after      = strtotime( get_post_meta( $page_id, 'report_after_date', true ) );
@@ -140,6 +129,5 @@ wp_reset_query();
 	<?php
 }
 }
-do_action( 'woocommerce_after_main_content' );
-get_footer( 'shop' );
-?>
+}
+genesis();
